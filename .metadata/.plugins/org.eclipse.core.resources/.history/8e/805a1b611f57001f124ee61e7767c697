@@ -1,0 +1,18 @@
+package com.example.demo.employee.services;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.example.demo.employee.dto.Employee;
+import com.example.demo.employee.repository.RepositoryEmployee;
+
+@Service
+public class EmployeeServices {
+	
+	@Autowired
+	RepositoryEmployee res;
+	public Employee addEmployee(Employee emp) {
+		res.save(emp);
+		return emp;
+	}
+}
