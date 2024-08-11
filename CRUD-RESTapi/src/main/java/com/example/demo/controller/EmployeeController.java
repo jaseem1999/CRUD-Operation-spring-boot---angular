@@ -1,9 +1,16 @@
 package com.example.demo.controller;
 
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,10 +19,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.employee.dto.Employee;
+import com.example.demo.employee.dto.EmployeeImage;
+import com.example.demo.employee.repository.EmployeeProfile;
 import com.example.demo.employee.services.EmployeeServices;
+
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -24,12 +36,43 @@ public class EmployeeController {
 	
 	@Autowired
 	EmployeeServices ser;
+	
+	@Autowired
+	EmployeeProfile proImg;
 
 	@PostMapping(path = "/add")
 	public Employee addEmployee(@RequestBody Employee emp) {
 		ser.saveEmployee(emp);
 		return emp;
 	}
+	
+	
+	@PostMapping(path="/add/profile")
+	public ResponseEntity<Map<String, String>> addProfileImage(@RequestParam("id") long id, @RequestParam("img") MultipartFile img) {
+	    Map<String, String> response = new HashMap<>();
+	    
+	    try {
+	        EmployeeImage eimg = new EmployeeImage();
+	        eimg.setImg(img.getBytes());
+	        Employee emp = ser.getEmpById(id);
+	        eimg.setEmp(emp);
+	        
+	        if (emp != null) {
+	            proImg.save(eimg);
+	            response.put("message", "Image added successfully");
+	            return ResponseEntity.ok(response);
+	        } else {
+	            response.put("message", "Image addition failed");
+	            return ResponseEntity.status(500).body(response);
+	        }
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        response.put("message", "Image addition failed");
+	        return ResponseEntity.status(500).body(response);
+	    }
+	}
+
+
 	
 	@PutMapping(path = "/add")
 	public Employee updatedEmployee(@RequestBody Employee emp) {
@@ -41,6 +84,24 @@ public class EmployeeController {
 	public List<Employee> getAllEmployee(){
 		return ser.getEmp();
 	}
+	
+	@GetMapping("/get/profile/{id}")
+	public ResponseEntity<byte[]> getProfileImage(@PathVariable("id") long id) {
+	    Employee emp = ser.getEmpById(id); 
+	    
+	    Optional<EmployeeImage> imageOpt = proImg.findByEmp(emp);
+	    
+	    if (imageOpt.isPresent()) {
+	        EmployeeImage employeeImage = imageOpt.get();
+	        return ResponseEntity.ok()
+	                .body(employeeImage.getImg());
+	    } else {
+	    
+	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+	    }
+	}
+
+
 	
 	
 	@GetMapping(path = "/get/{id}")

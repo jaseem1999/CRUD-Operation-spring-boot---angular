@@ -7,5 +7,5 @@ import com.example.demo.employee.dto.Employee;
 
 @Repository
 public interface RepositoryEmployee extends JpaRepository<Employee, Long> {
-	
+  	
 }
